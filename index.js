@@ -6,28 +6,50 @@ mongoose
   .catch(err => console.error("Could not connect to MongoDB", err));
 
 const courseSchema = new mongoose.Schema({
-  name: String,
+  name: {
+    type: String,
+    required: true
+  }, // only meaningful validation in mongoose
+  category: {
+    type: String,
+    required: true,
+    enum: ['web', 'mobile', 'network']
+  },
   author: String,
   tags: [String],
   date: {
     type: Date,
     default: Date.now
   },
-  isPublished: Boolean
+  isPublished: Boolean,
+  price: {
+    type: Number,
+    required: function () {
+      return this.isPublished;
+    },
+    min: 10,
+    max: 200
+  }
 });
 
 const Course = mongoose.model("Course", courseSchema);
 
 async function createCourse() {
   const course = new Course({
-    name: "Express Course",
+    name: "Node Course",
+    category: 'web',
     author: "sternmd",
     tags: ["node", "backend"],
-    isPublished: true
+    isPublished: true,
+    price: 15
   });
 
-  const result = await course.save();
-  console.log(result);
+  try {
+    const result = await course.save();
+    console.log(result);
+  } catch (ex) {
+    console.log(ex.message);
+  }
 }
 
 // UPDATE METHOD 1
@@ -53,17 +75,14 @@ async function updateCourse2(id) {
   // Approach: Update first
   // Update directly
   // Optionally: get updated document
-  const result = await Course.update(
-    {
-      _id: id
-    },
-    {
-      $set: {
-        author: "Mosh",
-        isPublished: false
-      }
+  const result = await Course.update({
+    _id: id
+  }, {
+    $set: {
+      author: "Mosh",
+      isPublished: false
     }
-  );
+  });
 
   console.log(result);
 }
@@ -115,9 +134,9 @@ async function getCourses() {
   const pageSize = 10;
   // /api/courses?pageNumber=2&pageSize=10
   const courses = await Course.find({
-    author: /.*sternmd.*/i,
-    isPublished: true
-  })
+      author: /.*sternmd.*/i,
+      isPublished: true
+    })
     .skip((pageNumber - 1) * pageSize)
     .limit(pageSize)
     .sort({
@@ -132,3 +151,4 @@ async function getCourses() {
 }
 
 getCourses();
+// createCourse();
