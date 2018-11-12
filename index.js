@@ -1,8 +1,9 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-mongoose.connect('mongodb://localhost/playground')
-  .then(() => console.log('connected to mongoDB...'))
-  .catch(err => console.error('Could not connect to MongoDB', err));
+mongoose
+  .connect("mongodb://localhost/playground")
+  .then(() => console.log("connected to mongoDB..."))
+  .catch(err => console.error("Could not connect to MongoDB", err));
 
 const courseSchema = new mongoose.Schema({
   name: String,
@@ -15,13 +16,13 @@ const courseSchema = new mongoose.Schema({
   isPublished: Boolean
 });
 
-const Course = mongoose.model('Course', courseSchema);
+const Course = mongoose.model("Course", courseSchema);
 
 async function createCourse() {
   const course = new Course({
-    name: 'Express Course',
-    author: 'sternmd',
-    tags: ['node', 'backend'],
+    name: "Express Course",
+    author: "sternmd",
+    tags: ["node", "backend"],
     isPublished: true
   });
 
@@ -29,8 +30,66 @@ async function createCourse() {
   console.log(result);
 }
 
-async function getCourses() {
+// UPDATE METHOD 1
+async function updateCourse1(id) {
+  // Approach: Query first
+  // findById()
+  // Modify its properties
+  // save()
+  const course = await Course.findById(id);
+  if (!course) return;
 
+  course.set({
+    isPublished: true,
+    author: "Another Author"
+  });
+
+  const result = await course.save();
+  console.log(result);
+}
+
+// UPDATE METHOD 2
+async function updateCourse2(id) {
+  // Approach: Update first
+  // Update directly
+  // Optionally: get updated document
+  const result = await Course.update(
+    {
+      _id: id
+    },
+    {
+      $set: {
+        author: "Mosh",
+        isPublished: false
+      }
+    }
+  );
+
+  console.log(result);
+}
+
+// updateCourse2('5be5c75079bc5036c08f7691');
+
+// REMOVE SINGLE COURSE
+async function removeCourse(id) {
+  const result = await Course.deleteOne({
+    _id: id
+  });
+  console.log(result);
+}
+
+// removeCourse('5be5c75079bc5036c08f7691');
+
+// REMOVE MULTIPLE COURSES
+async function removeCourse(id) {
+  // const result = await Course.deleteMany({
+  //   _id: id
+  // });
+  const course = await Course.findByIdAndRemove(id);
+  console.log(course);
+}
+
+async function getCourses() {
   // COMPARISON OPERATORS
   // eq (equal)
   // ne (not equal)
@@ -41,7 +100,7 @@ async function getCourses() {
   // in
   // nin (not in)
 
-  // REGEX 
+  // REGEX
   // author starts with Max
   // /^Max/
 
@@ -55,11 +114,10 @@ async function getCourses() {
   const pageNumber = 2;
   const pageSize = 10;
   // /api/courses?pageNumber=2&pageSize=10
-  const courses = await Course
-    .find({
-      author: /.*sternmd.*/i,
-      isPublished: true
-    })
+  const courses = await Course.find({
+    author: /.*sternmd.*/i,
+    isPublished: true
+  })
     .skip((pageNumber - 1) * pageSize)
     .limit(pageSize)
     .sort({
